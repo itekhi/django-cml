@@ -8,7 +8,7 @@ from django.http import HttpResponse
 from django.contrib.auth import authenticate, login
 
 
-def view_or_basicauth(view, request, test_func, realm = "", *args, **kwargs):
+def view_or_basicauth(view, request, test_func, realm="", *args, **kwargs):
     """
     This is a helper function used by both 'logged_in_or_basicauth' and
     'has_perm_or_basicauth' that does the nitty of determining if they
@@ -22,16 +22,17 @@ def view_or_basicauth(view, request, test_func, realm = "", *args, **kwargs):
 
     # They are not logged in. See if they provided login credentials
     #
-    if 'HTTP_AUTHORIZATION' in request.META:
-        auth = request.META['HTTP_AUTHORIZATION'].split()
+    print(request.META)
+    if "HTTP_AUTHORIZATION" in request.META:
+        auth = request.META["HTTP_AUTHORIZATION"].split()
         if len(auth) == 2:
             # NOTE: We are only support basic authentication for now.
             #
             if auth[0].lower() == "basic":
                 if six.PY2:
-                    uname, passwd = base64.b64decode(auth[1]).split(':')
+                    uname, passwd = base64.b64decode(auth[1]).split(":")
                 else:
-                    uname, passwd = base64.b64decode(auth[1]).decode('utf-8').split(':')
+                    uname, passwd = base64.b64decode(auth[1]).decode("utf-8").split(":")
                 user = authenticate(username=uname, password=passwd)
                 if user is not None:
                     if user.is_active:
@@ -46,11 +47,11 @@ def view_or_basicauth(view, request, test_func, realm = "", *args, **kwargs):
     #
     response = HttpResponse()
     response.status_code = 401
-    response['WWW-Authenticate'] = 'Basic realm="%s"' % realm
+    response["WWW-Authenticate"] = 'Basic realm="%s"' % realm
     return response
 
 
-def logged_in_or_basicauth(realm = ""):
+def logged_in_or_basicauth(realm=""):
     """
     A simple decorator that requires a user to be logged in. If they are not
     logged in the request is examined for a 'authorization' header.
@@ -79,16 +80,19 @@ def logged_in_or_basicauth(realm = ""):
 
     You can provide the name of the realm to ask for authentication within.
     """
+
     def view_decorator(func):
         def wrapper(request, *args, **kwargs):
-            return view_or_basicauth(func, request,
-                                     lambda u: u.is_authenticated,
-                                     realm, *args, **kwargs)
+            return view_or_basicauth(
+                func, request, lambda u: u.is_authenticated, realm, *args, **kwargs
+            )
+
         return wrapper
+
     return view_decorator
 
 
-def has_perm_or_basicauth(perm, realm = ""):
+def has_perm_or_basicauth(perm, realm=""):
     """
     This is similar to the above decorator 'logged_in_or_basicauth'
     except that it requires the logged in user to have a specific
@@ -101,10 +105,13 @@ def has_perm_or_basicauth(perm, realm = ""):
         ...
 
     """
+
     def view_decorator(func):
         def wrapper(request, *args, **kwargs):
-            return view_or_basicauth(func, request,
-                                     lambda u: u.has_perm(perm),
-                                     realm, *args, **kwargs)
+            return view_or_basicauth(
+                func, request, lambda u: u.has_perm(perm), realm, *args, **kwargs
+            )
+
         return wrapper
+
     return view_decorator
